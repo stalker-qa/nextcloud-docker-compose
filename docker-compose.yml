@@ -5,44 +5,50 @@ services:
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=Europe/Dublin
+      - TZ=Country/City
+      - REDIS_HOST=/var/run/redis/redis.sock
+      - MYSQL_HOST=db
+      - MYSQL_PASSWORD=yourpass
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
     volumes:
       - /opt/nextcloud/config:/config
       - /opt/nextcloud/data:/data
+      - ./redis:/var/run/redis
     ports:
-      - 8081:80
+      - 8080:80
     depends_on:
       - db
       - redis
-      - imaginary
     restart: unless-stopped
 
   db:
     image: mysql:8
     container_name: nextcloud-db
-
     environment:
-      - MYSQL_ROOT_PASSWORD=your_pass
+      - MYSQL_ROOT_PASSWORD=yourpass
       - MYSQL_DATABASE=nextcloud
       - MYSQL_USER=nextcloud
-      - MYSQL_PASSWORD=your_pass
-      - MYSQL_HOST=db
+      - MYSQL_PASSWORD=yourpass
     volumes:
       - ./mysql:/var/lib/mysql
     restart: unless-stopped
 
   redis:
-    image: redis:latest
+    image: redis:alpine
     container_name: nextcloud-redis
-    ports:
-      - 6379:6379 # You can specify your own port or configure a socket
+    command: redis-server --unixsocket /var/run/redis/redis.sock --unixsocketperm 770
+    volumes:
+      - ./redis:/var/run/redis
     restart: unless-stopped
 
-  imaginary:
+  imaginar:
     image: h2non/imaginary
-    container_name: nextcloud-imaginary
+    container_name: imaginary
+    command: -enable-url-source -mount /mnt/data
+    volumes:
+      - /opt/nextcloud/data:/mnt/data
     ports:
       - 9000:9000
-    command: -enable-url-source -concurrency 20
     restart: unless-stopped
 
